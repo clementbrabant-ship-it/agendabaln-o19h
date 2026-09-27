@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservation Balnéothérapie 19h — Clement BRABANT</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f4f8; min-height: 100vh; padding: 20px; color: #222; }
+.container { max-width: 780px; margin: 0 auto; }
+.header { background: #7B1E2E; border-radius: 12px; padding: 24px 28px; color: white; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.header-left h1 { font-size: 1.3em; margin-bottom: 4px; }
+.header-left p { font-size: 0.85em; opacity: 0.85; }
+.header-right { text-align: right; font-size: 0.82em; opacity: 0.9; line-height: 1.6; }
+.info-bar { background: white; border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; align-items: center; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+.info-pill { display: flex; align-items: center; gap: 8px; font-size: 0.88em; color: #555; }
+.info-pill .icon { font-size: 1.2em; }
+.info-pill strong { color: #222; }
+.legende { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.8em; color: #555; }
+.leg-dot { width: 12px; height: 12px; border-radius: 3px; }
+.loader { text-align: center; padding: 40px; color: #888; font-size: 0.9em; }
+.spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid #eee; border-top-color: #7B1E2E; border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.creneaux-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.creneau-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); border: 2px solid transparent; transition: all 0.2s; position: relative; overflow: hidden; }
+.creneau-card:hover:not(.complet) { border-color: #7B1E2E; transform: translateY(-2px); box-shadow: 0 4px 14px rgba(123,30,46,0.15); }
+.creneau-card.complet { opacity: 0.6; background: #f5f5f5; }
+.creneau-date { font-weight: bold; font-size: 1em; color: #7B1E2E; margin-bottom: 4px; text-transform: capitalize; }
+.creneau-heure { font-size: 0.85em; color: #666; margin-bottom: 10px; }
+.places-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.places-bar-inner { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.places-label { font-size: 0.78em; color: #888; margin-top: 3px; margin-bottom: 10px; }
+.badge-complet { position: absolute; top: 10px; right: 10px; background: #ccc; color: #666; font-size: 0.7em; font-weight: bold; padding: 2px 8px; border-radius: 20px; }
+.btn-reserver { width: 100%; padding: 9px; border: none; border-radius: 7px; font-weight: bold; font-size: 0.88em; cursor: pointer; transition: background 0.15s; }
+.btn-reserver.libre { background: #7B1E2E; color: white; }
+.btn-reserver.libre:hover { background: #5a1520; }
+.btn-reserver.complet { background: #ddd; color: #999; cursor: not-allowed; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.open { display: flex; }
+.modal { background: white; border-radius: 14px; padding: 28px; max-width: 400px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,0.2); animation: popIn 0.2s ease; }
+@keyframes popIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal h2 { color: #7B1E2E; font-size: 1.1em; margin-bottom: 6px; }
+.modal-date-txt { font-size: 0.88em; color: #666; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+.modal label { display: block; font-size: 0.85em; font-weight: bold; color: #555; margin-bottom: 6px; }
+.modal input { width: 100%; border: 2px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 0.95em; outline: none; transition: border-color 0.15s; }
+.modal input:focus { border-color: #7B1E2E; }
+.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+.btn-confirmer { flex: 2; padding: 12px; background: #7B1E2E; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95em; cursor: pointer; }
+.btn-confirmer:hover { background: #5a1520; }
+.btn-confirmer:disabled { background: #ccc; cursor: not-allowed; }
+.btn-annuler { flex: 1; padding: 12px; background: white; color: #888; border: 2px solid #ddd; border-radius: 8px; font-size: 0.9em; cursor: pointer; }
+.btn-annuler:hover { background: #f5f5f5; }
+.confirm-anim { text-align: center; padding: 10px 0; }
+.confirm-anim .check { font-size: 3em; margin-bottom: 10px; }
+.confirm-anim h3 { color: #2d7a2d; margin-bottom: 6px; }
+.confirm-anim p { font-size: 0.88em; color: #666; line-height: 1.5; }
+.btn-fermer { margin-top: 18px; padding: 10px 28px; background: #7B1E2E; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95em; }
+.admin-toggle { text-align: center; margin-bottom: 14px; }
+.admin-toggle button { background: none; border: 1px solid #ccc; padding: 6px 16px; border-radius: 20px; font-size: 0.8em; color: #888; cursor: pointer; }
+.admin-toggle button:hover { border-color: #7B1E2E; color: #7B1E2E; }
+.admin-panel { display: none; background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+.admin-panel h2 { color: #7B1E2E; font-size: 1em; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #f0e0e3; }
+.admin-creneau { margin-bottom: 16px; }
+.admin-creneau-titre { font-weight: bold; font-size: 0.9em; color: #444; margin-bottom: 6px; }
+.admin-liste { list-style: none; }
+.admin-liste li { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: #fdf0f2; border-radius: 6px; margin-bottom: 4px; font-size: 0.85em; }
+.btn-del { background: #c0394b; border: none; color: white; cursor: pointer; font-size: 0.82em; padding: 4px 10px; border-radius: 5px; font-weight: bold; flex-shrink: 0; margin-left: 8px; }
+.btn-del:hover { background: #7B1E2E; }
+.btn-del:disabled { background: #ccc; cursor: not-allowed; }
+.admin-vide { font-size: 0.82em; color: #aaa; font-style: italic; padding: 4px 0; }
+.admin-pwd { text-align: center; }
+.admin-pwd input { border: 2px solid #ddd; border-radius: 8px; padding: 8px 14px; font-size: 0.9em; outline: none; margin-right: 8px; }
+.admin-pwd input:focus { border-color: #7B1E2E; }
+.admin-pwd button { padding: 8px 18px; background: #7B1E2E; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9em; }
+.admin-actions { margin-top: 16px; padding-top: 12px; border-top: 1px solid #eee; }
+.btn-export { padding: 8px 16px; background: #7B1E2E; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85em; }
+.footer { text-align: center; font-size: 0.75em; color: #aaa; margin-top: 20px; font-style: italic; }
+@media(max-width:500px) { .header { flex-direction: column; } .header-right { text-align: left; } .creneaux-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <h1>🏊 Balnéothérapie Prescri'mouv</h1>
+      <p>Réservez votre séance en ligne — gratuit et sans inscription</p>
+    </div>
+    <div class="header-right">
+      <strong>Clement BRABANT</strong><br>
+      Intervenant Prescri'mouv<br>
+      CRFA — Charleville-Mézières<br>
+      06 38 51 45 75
+    </div>
+  </div>
+  <div class="info-bar">
+    <div class="info-pill"><span class="icon">📅</span><span>Tous les <strong>jeudis soir</strong></span></div>
+    <div class="info-pill"><span class="icon">🕕</span><span><strong>19h00 – 20h00</strong></span></div>
+    <div class="info-pill"><span class="icon">📍</span><span><strong>CRFA</strong>, Charleville-Mézières</span></div>
+    <div class="info-pill"><span class="icon">👥</span><span>Maximum <strong>12 participants</strong> par séance</span></div>
+  </div>
+  <div class="legende">
+    <div class="leg-item"><div class="leg-dot" style="background:#5A7A2A"></div> Places disponibles</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#C47A1E"></div> Presque complet</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ddd"></div> Complet</div>
+  </div>
+  <div class="creneaux-grid" id="creneaux-grid">
+    <div class="loader"><div class="spinner"></div><br>Chargement des séances…</div>
+  </div>
+  <div class="admin-toggle">
+    <button id="btn-admin-toggle">🔒 Accès intervenant</button>
+  </div>
+  <div class="admin-panel" id="admin-panel">
+    <div id="admin-pwd-zone" class="admin-pwd">
+      <p style="font-size:0.85em;color:#666;margin-bottom:12px">Entrez le code d'accès intervenant :</p>
+      <input type="password" id="pwd-input" placeholder="Code…">
+      <button id="btn-pwd-ok">Accéder</button>
+      <p id="pwd-err" style="color:#c0394b;font-size:0.8em;margin-top:8px;display:none">Code incorrect.</p>
+    </div>
+    <div id="admin-content" style="display:none">
+      <h2>📋 Liste des inscrits par séance</h2>
+      <div id="admin-list"><div class="loader"><div class="spinner"></div><br>Chargement…</div></div>
+      <div class="admin-actions">
+        <button class="btn-export" id="btn-export">📥 Exporter en CSV</button>
+      </div>
+    </div>
+  </div>
+  <div class="footer">Clement BRABANT — Intervenant Prescri'mouv — 06 38 51 45 75 — clement.brabant@gmail.com</div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Réserver une place</h2>
+    <div class="modal-date-txt" id="modal-date-txt"></div>
+    <div id="modal-form-zone">
+      <label>Votre nom et prénom *</label>
+      <input type="text" id="input-nom" placeholder="Ex : Marie DUPONT" autocomplete="name">
+      <div class="modal-btns">
+        <button class="btn-confirmer" id="btn-confirmer">✓ Confirmer ma réservation</button>
+        <button class="btn-annuler" id="btn-annuler">Annuler</button>
+      </div>
+    </div>
+    <div id="modal-confirm-zone" style="display:none">
+      <div class="confirm-anim">
+        <div class="check">✅</div>
+        <h3>Réservation confirmée !</h3>
+        <p id="confirm-txt"></p>
+        <button class="btn-fermer" id="btn-fermer">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbynQq4pi7cJB-zu5pNYCfq3ywa01XWzNEZ0PBpv5Nu5ml6NSRAVveHrnRg75MuByJaQTw/exec';
+const MAX_PLACES = 12;
+const HEURE = '19h00';
+const HEURE_FIN = '20h00';
+const ADMIN_CODE = 'balnéo2026';
+const DATES = [
+  '2026-09-03','2026-09-10','2026-09-17',
+  '2026-10-01','2026-10-08','2026-10-15','2026-10-22','2026-10-29',
+  '2026-11-05','2026-11-12','2026-11-19','2026-11-26',
+  '2026-12-03','2026-12-10','2026-12-17'
+];
+
+// ─── JSONP ────────────────────────────────────────────────────
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      script.remove();
+      reject(new Error('timeout'));
+    }, 10000);
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+    const qs = Object.entries({...params, callback: cbName})
+      .map(([k,v]) => encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    const script = document.createElement('script');
+    script.src = API + '?' + qs;
+    script.onerror = () => { clearTimeout(timeout); delete window[cbName]; reject(new Error('erreur réseau')); };
+    document.head.appendChild(script);
+  });
+}
+
+// ─── UTILS ────────────────────────────────────────────────────
+function getDatesActives() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return DATES.filter(d => new Date(d + 'T00:00:00') >= today);
+}
+function formatDate(dateStr) {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', {
+    weekday:'long', day:'numeric', month:'long', year:'numeric'
+  });
+}
+
+// ─── RENDU CRÉNEAUX ───────────────────────────────────────────
+let dataGlobal = {};
+
+async function renderCreneaux() {
+  const grid = document.getElementById('creneaux-grid');
+  grid.innerHTML = '<div class="loader"><div class="spinner"></div><br>Chargement des séances…</div>';
+  try {
+    dataGlobal = await jsonp({action: 'get'});
+  } catch(e) {
+    grid.innerHTML = '<div class="loader">⚠️ Impossible de charger les séances. Vérifiez votre connexion.</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  const dates = getDatesActives();
+  if (!dates.length) { grid.innerHTML = '<div class="loader">Aucune séance à venir.</div>'; return; }
+
+  dates.forEach(dateStr => {
+    const inscrits = dataGlobal[dateStr] || [];
+    const prises = inscrits.length;
+    const restantes = MAX_PLACES - prises;
+    const complet = restantes <= 0;
+    const pct = Math.round((prises / MAX_PLACES) * 100);
+    const barColor = pct >= 100 ? '#ccc' : pct >= 75 ? '#C47A1E' : '#5A7A2A';
+
+    const card = document.createElement('div');
+    card.className = 'creneau-card' + (complet ? ' complet' : '');
+
+    if (complet) {
+      const badge = document.createElement('div');
+      badge.className = 'badge-complet';
+      badge.textContent = 'COMPLET';
+      card.appendChild(badge);
+    }
+
+    card.innerHTML += `
+      <div class="creneau-date">${formatDate(dateStr)}</div>
+      <div class="creneau-heure">🕕 ${HEURE} – ${HEURE_FIN} (1h)</div>
+      <div class="places-bar"><div class="places-bar-inner" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="places-label">${complet ? '❌ Complet (0 place restante)' : `✅ ${restantes} place${restantes>1?'s':''} disponible${restantes>1?'s':''} sur ${MAX_PLACES}`}</div>`;
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-reserver ' + (complet ? 'complet' : 'libre');
+    btn.textContent = complet ? 'Complet' : 'Réserver ma place';
+    btn.disabled = complet;
+    if (!complet) btn.addEventListener('click', () => ouvrirModal(dateStr));
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+}
+
+// ─── MODAL ────────────────────────────────────────────────────
+let dateSelectionnee = null;
+
+function ouvrirModal(dateStr) {
+  dateSelectionnee = dateStr;
+  document.getElementById('modal-date-txt').textContent = `📅 ${formatDate(dateStr)} — ${HEURE} à ${HEURE_FIN}`;
+  document.getElementById('input-nom').value = '';
+  document.getElementById('input-nom').style.borderColor = '#ddd';
+  document.getElementById('modal-form-zone').style.display = 'block';
+  document.getElementById('modal-confirm-zone').style.display = 'none';
+  const btn = document.getElementById('btn-confirmer');
+  btn.disabled = false;
+  btn.textContent = '✓ Confirmer ma réservation';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('input-nom').focus(), 100);
+}
+
+function fermerModal() {
+  document.getElementById('modal').classList.remove('open');
+  dateSelectionnee = null;
+  renderCreneaux();
+}
+
+document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) fermerModal(); });
+document.getElementById('btn-annuler').addEventListener('click', fermerModal);
+document.getElementById('btn-fermer').addEventListener('click', fermerModal);
+
+document.getElementById('btn-confirmer').addEventListener('click', async function() {
+  const nom = document.getElementById('input-nom').value.trim();
+  if (!nom) { document.getElementById('input-nom').style.borderColor = '#c0394b'; document.getElementById('input-nom').focus(); return; }
+  this.disabled = true;
+  this.textContent = '⏳ Réservation en cours…';
+  try {
+    const res = await jsonp({action: 'add', date: dateSelectionnee, nom});
+    if (res.ok) {
+      document.getElementById('modal-form-zone').style.display = 'none';
+      document.getElementById('modal-confirm-zone').style.display = 'block';
+      document.getElementById('confirm-txt').innerHTML =
+        `<strong>${nom}</strong>, votre place est réservée pour le<br><strong>${formatDate(dateSelectionnee)}</strong><br>à ${HEURE} 🏊`;
+    } else if (res.error === 'deja_inscrit') {
+      alert(`"${nom}" est déjà inscrit(e) sur cette séance.`);
+      this.disabled = false; this.textContent = '✓ Confirmer ma réservation';
+    } else if (res.error === 'complet') {
+      alert('Cette séance est maintenant complète.');
+      fermerModal();
+    } else {
+      alert('Erreur. Réessayez.'); this.disabled = false; this.textContent = '✓ Confirmer ma réservation';
+    }
+  } catch(e) {
+    alert('Erreur de connexion. Réessayez.'); this.disabled = false; this.textContent = '✓ Confirmer ma réservation';
+  }
+});
+
+// ─── ADMIN ────────────────────────────────────────────────────
+let adminOpen = false;
+
+document.getElementById('btn-admin-toggle').addEventListener('click', () => {
+  adminOpen = !adminOpen;
+  document.getElementById('admin-panel').style.display = adminOpen ? 'block' : 'none';
+});
+
+document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkPwd(); });
+document.getElementById('btn-pwd-ok').addEventListener('click', checkPwd);
+
+function checkPwd() {
+  if (document.getElementById('pwd-input').value === ADMIN_CODE) {
+    document.getElementById('admin-pwd-zone').style.display = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    renderAdmin();
+  } else {
+    document.getElementById('pwd-err').style.display = 'block';
+  }
+}
+
+async function renderAdmin() {
+  const container = document.getElementById('admin-list');
+  container.innerHTML = '<div class="loader"><div class="spinner"></div><br>Chargement…</div>';
+  try {
+    dataGlobal = await jsonp({action: 'get'});
+  } catch(e) {
+    container.innerHTML = '<div class="loader">⚠️ Erreur de chargement.</div>'; return;
+  }
+  container.innerHTML = '';
+  getDatesActives().forEach(dateStr => {
+    const inscrits = dataGlobal[dateStr] || [];
+    const section = document.createElement('div');
+    section.className = 'admin-creneau';
+    const titre = document.createElement('div');
+    titre.className = 'admin-creneau-titre';
+    titre.textContent = `📅 ${formatDate(dateStr)} — ${inscrits.length}/${MAX_PLACES} inscrits`;
+    section.appendChild(titre);
+    if (!inscrits.length) {
+      const vide = document.createElement('div');
+      vide.className = 'admin-vide';
+      vide.textContent = 'Aucune réservation';
+      section.appendChild(vide);
+    } else {
+      const ul = document.createElement('ul');
+      ul.className = 'admin-liste';
+      inscrits.forEach(nom => {
+        const li = document.createElement('li');
+        const nomSpan = document.createElement('span');
+        nomSpan.textContent = '👤 ' + nom;
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn-del';
+        btnDel.textContent = '✕ Supprimer';
+        btnDel.addEventListener('click', async function() {
+          if (!confirm(`Supprimer la réservation de "${nom}" ?`)) return;
+          this.disabled = true; this.textContent = '⏳…';
+          try {
+            await jsonp({action: 'delete', date: dateStr, nom});
+            renderAdmin(); renderCreneaux();
+          } catch(e) {
+            alert('Erreur. Réessayez.'); this.disabled = false; this.textContent = '✕ Supprimer';
+          }
+        });
+        li.appendChild(nomSpan); li.appendChild(btnDel); ul.appendChild(li);
+      });
+      section.appendChild(ul);
+    }
+    container.appendChild(section);
+  });
+}
+
+document.getElementById('btn-export').addEventListener('click', async () => {
+  const data = await jsonp({action: 'get'});
+  let csv = 'Date;Heure;Nom\n';
+  getDatesActives().forEach(dateStr => {
+    (data[dateStr] || []).forEach(nom => { csv += `${formatDate(dateStr)};${HEURE};${nom}\n`; });
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
+  a.download = 'reservations_balneo.csv'; a.click();
+});
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderCreneaux();
+</script>
+</body>
+</html>
